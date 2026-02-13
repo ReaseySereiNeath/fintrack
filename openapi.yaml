@@ -1,0 +1,373 @@
+openapi: 3.0.3
+info:
+  title: FinTrack API
+  description: Personal finance tracking API
+  version: 1.0.0
+
+paths:
+  /api/transactions:
+    get:
+      summary: List transactions
+      operationId: listTransactions
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Paginated list of transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionList'
+    post:
+      summary: Create a transaction
+      operationId: createTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransaction'
+      responses:
+        '201':
+          description: Created transaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+
+  /api/transactions/{id}:
+    get:
+      summary: Get a single transaction
+      operationId: getTransaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Transaction not found
+
+  /api/categories:
+    get:
+      summary: List categories
+      operationId: listCategories
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+    post:
+      summary: Create a category
+      operationId: createCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategory'
+      responses:
+        '201':
+          description: Created category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+
+  /api/categories/{id}:
+    put:
+      summary: Update a category
+      operationId: updateCategory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategory'
+      responses:
+        '200':
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+    delete:
+      summary: Delete a category
+      operationId: deleteCategory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Category deleted
+
+  /api/analytics/monthly:
+    get:
+      summary: Monthly spending summary
+      operationId: getMonthlyAnalytics
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+        - name: month
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Monthly spending report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyReport'
+
+  /api/analytics/by-category:
+    get:
+      summary: Spending breakdown by category
+      operationId: getCategoryAnalytics
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Category spending breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategorySpending'
+
+  /api/budgets:
+    get:
+      summary: List budgets
+      operationId: listBudgets
+      responses:
+        '200':
+          description: List of budget limits
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Budget'
+    post:
+      summary: Create or update a budget
+      operationId: upsertBudget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBudget'
+      responses:
+        '200':
+          description: Budget saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Budget'
+
+components:
+  schemas:
+    Transaction:
+      type: object
+      required: [id, amount, type, categoryId, description, date, createdAt]
+      properties:
+        id:
+          type: string
+        amount:
+          type: number
+          description: Amount in cents
+        type:
+          type: string
+          enum: [income, expense]
+        categoryId:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateTransaction:
+      type: object
+      required: [amount, type, categoryId, description, date]
+      properties:
+        amount:
+          type: number
+        type:
+          type: string
+          enum: [income, expense]
+        categoryId:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+
+    TransactionList:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    Category:
+      type: object
+      required: [id, name, color, icon]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+          description: Hex color code
+        icon:
+          type: string
+          description: Icon identifier
+
+    CreateCategory:
+      type: object
+      required: [name, color, icon]
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+        icon:
+          type: string
+
+    MonthlyReport:
+      type: object
+      required: [year, month, totalIncome, totalExpenses, netSavings, dailySpending]
+      properties:
+        year:
+          type: integer
+        month:
+          type: integer
+        totalIncome:
+          type: number
+        totalExpenses:
+          type: number
+        netSavings:
+          type: number
+        dailySpending:
+          type: array
+          items:
+            type: object
+            required: [date, amount]
+            properties:
+              date:
+                type: string
+                format: date
+              amount:
+                type: number
+
+    CategorySpending:
+      type: object
+      required: [categoryId, categoryName, total, percentage]
+      properties:
+        categoryId:
+          type: string
+        categoryName:
+          type: string
+        total:
+          type: number
+        percentage:
+          type: number
+
+    Budget:
+      type: object
+      required: [id, categoryId, limit, spent, period]
+      properties:
+        id:
+          type: string
+        categoryId:
+          type: string
+        limit:
+          type: number
+          description: Budget limit in cents
+        spent:
+          type: number
+          description: Amount spent so far in cents
+        period:
+          type: string
+          enum: [monthly, weekly]
+
+    CreateBudget:
+      type: object
+      required: [categoryId, limit, period]
+      properties:
+        categoryId:
+          type: string
+        limit:
+          type: number
+        period:
+          type: string
+          enum: [monthly, weekly]

@@ -3,7 +3,24 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
-  modules: ['@nuxtjs/i18n'],
+  components: [
+    { path: '~/shared/components', prefix: '' },
+    { path: '~/domains', prefix: '', pathPrefix: false },
+  ],
+
+  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/i18n'],
+
+  tailwindcss: {
+    cssPath: '~/assets/css/main.css',
+  },
+
+  app: {
+    head: {
+      meta: [
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      ],
+    },
+  },
 
   i18n: {
     locales: [{ code: 'en', name: 'English' }],

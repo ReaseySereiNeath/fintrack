@@ -14,7 +14,7 @@ export default defineNuxtConfig({
     { path: '~/domains', prefix: '', pathPrefix: false },
   ],
 
-  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/i18n'],
+  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/i18n', '@nuxt/eslint'],
 
   tailwindcss: {
     cssPath: '~/assets/css/main.css',

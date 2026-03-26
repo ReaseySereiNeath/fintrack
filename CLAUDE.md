@@ -4,47 +4,55 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Dev Commands
 
-- `npm run dev` — Start Nuxt dev server
+- `npm run dev` — Start Nuxt dev server (http://localhost:3000)
 - `npm run build` — Production build
 - `npm run preview` — Preview production build
 - `npm run generate` — Static site generation
-- No test runner or linter configured yet
+- `npm run lint` — Run ESLint
+- `npm run lint:fix` — Run ESLint with auto-fix
+- `npx nuxt typecheck` — Run TypeScript type checking
+- No test runner configured yet (Vitest + Playwright planned)
 
 ## Architecture
 
-**Nuxt 4 full-stack app** (Vue 3 + Vite under the hood) — a personal finance tracker called FinTrack.
+**Nuxt 4 full-stack app** (Vue 3 + Vite) — a personal finance tracker called FinTrack.
 
-### Frontend (`app/`)
+### Domain-Driven Design (`app/domains/`)
 
-**Domain-Driven Design** structure under `app/domains/`:
-- Each domain (transaction, category, analytics, budget) has `components/`, `composables/`, `schemas/`, `types/`
-- Only `transaction/` domain has implemented composables/components; others are scaffolded empty
+Four domains, each with `components/`, `composables/`, `schemas/`, `types/` subdirs:
 
-**Pages** (`app/pages/`) — file-based routing:
-- `/` — Dashboard with stat cards and spending chart
-- `/transactions` — CRUD with search, filter, pagination
-- `/analytics` — Doughnut chart + category breakdown
-- `/budget` — Budget limits with progress bars
+- **transaction** — `useTransactions()`, `useCreateTransaction()`, `useDeleteTransaction()` + `TransactionSchema`
+- **category** — `useCategories()` + `CategorySchema` (cross-cutting, used by all other domains)
+- **budget** — `useBudgets()`, `useUpdateBudget()` + `BudgetSchema`
+- **analytics** — `useExpensesByCategory()` (fetches all transactions for client-side grouping)
 
-**Shared** (`app/shared/`) — cross-domain components (`AppSidebar`, `MobileNav`)
+Domain composables own their TanStack Query hooks and mutation logic. Pages should consume composables, not define inline queries/mutations.
 
 ### Backend (`server/`)
 
-**Mock REST API** using Nuxt server routes with in-memory data store (`server/data/mock.ts`). No database — all data lives in memory arrays. API contract defined in `openapi.yaml`.
+**Mock REST API** with in-memory data (`server/data/mock.ts`). No database yet — all 11 endpoints use arrays. API contract defined in `openapi.yaml`.
 
-Amounts are stored in **cents** (e.g., 4500 = $45.00).
+- `server/utils/validateBody.ts` — Zod validation wrapper for all POST/PUT routes. Uses `schema.safeParse()` + `createError()` on failure.
+- Budget `spent` values are computed dynamically from transactions in `server/api/budgets/index.get.ts`, not stored statically.
 
 ### Key Patterns
 
-- **Data fetching**: TanStack Vue Query v5 via composables (e.g., `useTransactions`, `useCategories`). Query client configured in `app/plugins/vue-query.ts` with 1-minute stale time. Mutations invalidate related queries on success.
-- **Validation**: Zod schemas validate all API responses in composables. Types are inferred from schemas via `z.infer<>`.
-- **Styling**: Tailwind CSS utility classes only — no custom CSS classes. Mobile-first responsive with `md:` and `lg:` breakpoints.
-- **i18n**: `@nuxtjs/i18n` configured in `i18n.config.ts`, English only currently.
-- **Icons**: `lucide-vue-next` for all icons.
-- **Charts**: Chart.js + vue-chartjs for dashboard and analytics visualizations.
+- **Currency**: All amounts stored as **cents** (integers). Use `formatCurrency(cents)` from `app/shared/utils/format.ts` for display.
+- **Data fetching**: TanStack Vue Query v5 composables. Stale time: 1 minute. Mutations use `queryClient.invalidateQueries()` (refetch-on-success, not optimistic updates).
+- **Validation**: Zod schemas validate API responses in composables and request bodies on the server. Types inferred via `z.infer<>`.
+- **Error handling**: Global `onError` handlers on both `QueryCache` and `MutationCache` in `app/plugins/vue-query.ts`. Toast notifications via `app/shared/composables/useToast.ts`.
+- **Styling**: Tailwind CSS utility classes only. Mobile-first with `md:` and `lg:` breakpoints.
+- **$fetch type depth**: When using `$fetch` inside `useMutation`, add explicit `Promise<void>` return type to avoid TypeScript "excessive stack depth" errors (Nuxt route type inference issue).
 
-### Nuxt Config Notes
+### Shared Utilities
+
+- `app/shared/utils/format.ts` — `formatCurrency()`, `formatDate()`
+- `app/shared/composables/useToast.ts` — reactive toast notification system
+- `app/shared/components/ToastContainer.vue` — rendered in `app.vue`
+
+### Nuxt Config
 
 - Components auto-imported from `~/shared/components` and `~/domains`
-- Modules: `@nuxtjs/tailwindcss`, `@nuxtjs/i18n`
-- Devtools enabled
+- Modules: `@nuxtjs/tailwindcss`, `@nuxtjs/i18n`, `@nuxt/eslint`
+- `runtimeConfig.public.apiBase` configured (override via `NUXT_PUBLIC_API_BASE` env var)
+- ESLint ignores `figma-export/` directory

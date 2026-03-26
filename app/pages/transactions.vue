@@ -105,14 +105,14 @@ const fmtAmount = formatCurrency
           type="text"
           placeholder="Description"
           class="p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none lg:col-span-2"
-        />
+        >
         <input
           v-model="form.amount"
           type="number"
           step="0.01"
           placeholder="Amount"
           class="p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-        />
+        >
         <select
           v-model="form.categoryId"
           class="p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
@@ -149,7 +149,7 @@ const fmtAmount = formatCurrency
             type="text"
             placeholder="Search transactions..."
             class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-          />
+          >
         </div>
         <div class="flex items-center gap-2 w-full md:w-auto">
           <Filter :size="20" class="text-gray-400 shrink-0" />

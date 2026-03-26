@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Home, List, PieChart, Wallet, Settings, X } from 'lucide-vue-next'
 
-const props = defineProps<{ open: boolean }>()
+defineProps<{ open: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 
 const route = useRoute()

@@ -102,7 +102,7 @@ const fmt = formatCurrency
             step="0.01"
             autofocus
             class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-          />
+          >
         </div>
 
         <!-- Progress Bar -->

@@ -52,9 +52,9 @@ export const transactions: Transaction[] = [
 ]
 
 export const budgets: Budget[] = [
-  { id: 'bud-1', categoryId: 'cat-1', limit: 30000, spent: 13000, period: 'monthly' },
-  { id: 'bud-2', categoryId: 'cat-2', limit: 15000, spent: 5500, period: 'monthly' },
-  { id: 'bud-3', categoryId: 'cat-3', limit: 10000, spent: 6500, period: 'monthly' },
-  { id: 'bud-4', categoryId: 'cat-4', limit: 20000, spent: 12000, period: 'monthly' },
-  { id: 'bud-5', categoryId: 'cat-5', limit: 15000, spent: 7500, period: 'monthly' },
+  { id: 'bud-1', categoryId: 'cat-1', limit: 30000, spent: 0, period: 'monthly' },
+  { id: 'bud-2', categoryId: 'cat-2', limit: 15000, spent: 0, period: 'monthly' },
+  { id: 'bud-3', categoryId: 'cat-3', limit: 10000, spent: 0, period: 'monthly' },
+  { id: 'bud-4', categoryId: 'cat-4', limit: 20000, spent: 0, period: 'monthly' },
+  { id: 'bud-5', categoryId: 'cat-5', limit: 15000, spent: 0, period: 'monthly' },
 ]

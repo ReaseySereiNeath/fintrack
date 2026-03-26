@@ -1,39 +1,23 @@
 <script setup lang="ts">
 import { Search, Plus, Trash2, Filter, Calendar } from 'lucide-vue-next'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { z } from 'zod'
-import { CategorySchema } from '~/domains/transaction/schemas/category'
-import { TransactionSchema } from '~/domains/transaction/schemas/transaction'
+import { useCategories } from '~/domains/category/composables/useCategories'
+import { useTransactions } from '~/domains/transaction/composables/useTransactions'
+import { useCreateTransaction } from '~/domains/transaction/composables/useCreateTransaction'
+import { useDeleteTransaction } from '~/domains/transaction/composables/useDeleteTransaction'
+import { formatCurrency, formatDate } from '~/shared/utils/format'
 
 definePageMeta({ layout: 'default' })
 
-const queryClient = useQueryClient()
-
 // --- Data ---
-const { data: categories } = useQuery({
-  queryKey: ['categories'],
-  queryFn: async () => z.array(CategorySchema).parse(await $fetch('/api/categories')),
-})
+const { data: categories } = useCategories()
 
 const searchTerm = ref('')
 const filterCategory = ref('All')
 const page = ref(1)
-const limit = 20
+const limit = ref(20)
+const categoryId = computed(() => filterCategory.value !== 'All' ? filterCategory.value : undefined)
 
-const { data: txData, isLoading } = useQuery({
-  queryKey: ['transactions', filterCategory, page],
-  queryFn: async () => {
-    const params: Record<string, string | number> = { page: page.value, limit }
-    if (filterCategory.value !== 'All') params.categoryId = filterCategory.value
-    const raw = await $fetch('/api/transactions', { params })
-    return z.object({
-      data: z.array(TransactionSchema),
-      total: z.number(),
-      page: z.number(),
-      limit: z.number(),
-    }).parse(raw)
-  },
-})
+const { data: txData, isLoading } = useTransactions({ page, limit, categoryId: categoryId as Ref<string | undefined> })
 
 const filteredTransactions = computed(() => {
   if (!txData.value) return []
@@ -42,7 +26,7 @@ const filteredTransactions = computed(() => {
   return txData.value.data.filter(t => t.description.toLowerCase().includes(term))
 })
 
-const totalPages = computed(() => txData.value ? Math.ceil(txData.value.total / limit) : 1)
+const totalPages = computed(() => txData.value ? Math.ceil(txData.value.total / limit.value) : 1)
 
 const categoryMap = computed(() =>
   Object.fromEntries((categories.value ?? []).map(c => [c.id, c]))
@@ -58,18 +42,7 @@ const form = reactive({
   date: new Date().toISOString().slice(0, 10),
 })
 
-const addMutation = useMutation({
-  mutationFn: (body: object) => $fetch('/api/transactions', { method: 'POST', body }),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['transactions'] })
-    form.description = ''
-    form.amount = ''
-    form.categoryId = categories.value?.[0]?.id ?? ''
-    form.type = 'expense'
-    form.date = new Date().toISOString().slice(0, 10)
-    isAdding.value = false
-  },
-})
+const addMutation = useCreateTransaction()
 
 function handleAdd(e: Event) {
   e.preventDefault()
@@ -77,17 +50,23 @@ function handleAdd(e: Event) {
   addMutation.mutate({
     amount: Math.round(parseFloat(form.amount) * 100),
     type: form.type,
-    categoryId: form.categoryId || categories.value?.[0]?.id,
+    categoryId: form.categoryId || (categories.value?.[0]?.id ?? ''),
     description: form.description,
     date: form.date,
+  }, {
+    onSuccess: () => {
+      form.description = ''
+      form.amount = ''
+      form.categoryId = categories.value?.[0]?.id ?? ''
+      form.type = 'expense'
+      form.date = new Date().toISOString().slice(0, 10)
+      isAdding.value = false
+    },
   })
 }
 
 // --- Delete Transaction ---
-const deleteMutation = useMutation({
-  mutationFn: (id: string) => $fetch(`/api/transactions/${id}`, { method: 'DELETE' }),
-  onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
-})
+const deleteMutation = useDeleteTransaction()
 
 // Init default category
 watch(categories, (cats) => {
@@ -95,12 +74,8 @@ watch(categories, (cats) => {
   if (first && !form.categoryId) form.categoryId = first.id
 }, { immediate: true })
 
-function fmtDate(date: string) {
-  return new Date(date).toLocaleDateString()
-}
-function fmtAmount(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`
-}
+const fmtDate = formatDate
+const fmtAmount = formatCurrency
 </script>
 
 <template>

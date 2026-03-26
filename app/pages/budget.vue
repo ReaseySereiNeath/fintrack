@@ -1,30 +1,14 @@
 <script setup lang="ts">
 import { Edit2, Save } from 'lucide-vue-next'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { z } from 'zod'
-import { CategorySchema } from '~/domains/transaction/schemas/category'
+import { useBudgets, useUpdateBudget } from '~/domains/budget/composables/useBudgets'
+import { useCategories } from '~/domains/category/composables/useCategories'
+import { formatCurrency } from '~/shared/utils/format'
+import type { Budget } from '~/domains/budget/schemas/budget'
 
 definePageMeta({ layout: 'default' })
 
-const queryClient = useQueryClient()
-
-const BudgetSchema = z.object({
-  id: z.string(),
-  categoryId: z.string(),
-  limit: z.number(),
-  spent: z.number(),
-  period: z.enum(['monthly', 'weekly']),
-})
-
-const { data: budgets, isLoading: budgetsLoading } = useQuery({
-  queryKey: ['budgets'],
-  queryFn: async () => z.array(BudgetSchema).parse(await $fetch('/api/budgets')),
-})
-
-const { data: categories } = useQuery({
-  queryKey: ['categories'],
-  queryFn: async () => z.array(CategorySchema).parse(await $fetch('/api/categories')),
-})
+const { data: budgets, isLoading: budgetsLoading } = useBudgets()
+const { data: categories } = useCategories()
 
 const categoryMap = computed(() =>
   Object.fromEntries((categories.value ?? []).map(c => [c.id, c]))
@@ -34,24 +18,22 @@ const categoryMap = computed(() =>
 const editingId = ref<string | null>(null)
 const editLimit = ref(0)
 
-function startEdit(budget: z.infer<typeof BudgetSchema>) {
+function startEdit(budget: Budget) {
   editingId.value = budget.id
   editLimit.value = budget.limit / 100
 }
 
-const updateMutation = useMutation({
-  mutationFn: (body: object) => $fetch('/api/budgets', { method: 'POST', body }),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['budgets'] })
-    editingId.value = null
-  },
-})
+const updateMutation = useUpdateBudget()
 
-function handleSave(budget: z.infer<typeof BudgetSchema>) {
+function handleSave(budget: Budget) {
   updateMutation.mutate({
     categoryId: budget.categoryId,
     limit: Math.round(editLimit.value * 100),
     period: budget.period,
+  }, {
+    onSuccess: () => {
+      editingId.value = null
+    },
   })
 }
 
@@ -59,9 +41,7 @@ function percentage(spent: number, limit: number) {
   return Math.min((spent / limit) * 100, 100)
 }
 
-function fmt(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`
-}
+const fmt = formatCurrency
 </script>
 
 <template>

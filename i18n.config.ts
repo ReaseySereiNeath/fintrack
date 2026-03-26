@@ -25,7 +25,4 @@ export default defineI18nConfig(() => ({
     },
   },
 }))
-function defineI18nConfig(arg0: () => { legacy: boolean; locale: string; messages: { en: { app: { title: string; }; transactions: { title: string; amount: string; date: string; category: string; description: string; }; categories: { title: string; }; analytics: { title: string; }; budgets: { title: string; }; }; }; }) {
-  throw new Error("Function not implemented.");
-}
 

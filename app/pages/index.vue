@@ -11,7 +11,8 @@ import {
   Tooltip,
 } from 'chart.js'
 import { useTransactions } from '~/domains/transaction/composables/useTransactions'
-import { useCategories } from '~/domains/transaction/composables/useCategories'
+import { useCategories } from '~/domains/category/composables/useCategories'
+import { formatCurrency } from '~/shared/utils/format'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip)
 
@@ -72,9 +73,7 @@ const chartOptions = {
   },
 }
 
-function fmt(cents: number) {
-  return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
-}
+const fmt = formatCurrency
 </script>
 
 <template>

@@ -6,10 +6,9 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js'
-import { useQuery } from '@tanstack/vue-query'
-import { z } from 'zod'
-import { TransactionSchema } from '~/domains/transaction/schemas/transaction'
-import { CategorySchema } from '~/domains/transaction/schemas/category'
+import { useExpensesByCategory } from '~/domains/analytics/composables/useExpensesByCategory'
+import { useCategories } from '~/domains/category/composables/useCategories'
+import { formatCurrency } from '~/shared/utils/format'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
@@ -17,18 +16,8 @@ definePageMeta({ layout: 'default' })
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#a4de6c']
 
-const { data: txData } = useQuery({
-  queryKey: ['transactions', 'all'],
-  queryFn: async () => {
-    const raw = await $fetch('/api/transactions', { params: { limit: 1000 } })
-    return z.object({ data: z.array(TransactionSchema) }).parse(raw)
-  },
-})
-
-const { data: categories } = useQuery({
-  queryKey: ['categories'],
-  queryFn: async () => z.array(CategorySchema).parse(await $fetch('/api/categories')),
-})
+const { data: txData } = useExpensesByCategory()
+const { data: categories } = useCategories()
 
 const categoryMap = computed(() =>
   Object.fromEntries((categories.value ?? []).map(c => [c.id, c]))
@@ -64,9 +53,7 @@ const chartOptions = {
   },
 }
 
-function fmt(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`
-}
+const fmt = formatCurrency
 </script>
 
 <template>

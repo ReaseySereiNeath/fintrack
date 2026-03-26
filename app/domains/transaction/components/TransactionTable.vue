@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Transaction } from '../schemas/transaction'
-import type { Category } from '../schemas/category'
+import type { Category } from '~/domains/category/schemas/category'
 
 const props = defineProps<{
   transactions: Transaction[]

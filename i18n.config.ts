@@ -1,3 +1,5 @@
+/// <reference path="./.nuxt/nuxt.d.ts" />
+
 export default defineI18nConfig(() => ({
   legacy: false,
   locale: 'en',

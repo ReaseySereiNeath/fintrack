@@ -5,6 +5,10 @@ pipeline {
         nodejs 'node-22'
     }
 
+    environment {
+        CI = 'true'
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -15,6 +19,12 @@ pipeline {
         stage('Install') {
             steps {
                 sh 'npm ci'
+            }
+        }
+
+        stage('Typecheck') {
+            steps {
+                sh 'npx vue-tsc --noEmit'
             }
         }
 

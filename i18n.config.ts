@@ -1,4 +1,4 @@
-export default defineI18nConfig(() => ({
+export default () => ({
   legacy: false,
   locale: 'en',
   messages: {
@@ -24,5 +24,4 @@ export default defineI18nConfig(() => ({
       },
     },
   },
-}))
-
+})
